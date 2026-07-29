@@ -5,3 +5,6 @@ numpy
 scikit-learn
 xgboost
 joblib
+streamlit
+requests
+plotly
