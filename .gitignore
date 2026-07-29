@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+venv/
+k8s-env/
+
+.ipynb_checkpoints/
+
+processed_data.csv
+train_xgb.ipynb
+
+.DS_Store
