@@ -6,7 +6,7 @@ import plotly.express as px
 import os
 
 # Kubernetes Service URL
-API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
+API_URL = os.getenv("API_URL", "https://cross-able-willing.ngrok-free.dev -> http://localhost:8000/predict")
 
 st.set_page_config(
     page_title="Fraud Detection",
