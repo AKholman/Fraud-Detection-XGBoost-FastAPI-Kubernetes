@@ -1,186 +1,153 @@
+# 💳 Real-Time Credit Card Fraud Detection (Kubernetes Deployment)
+
 ## 🚀 Live Demo
-👉 https://fraud-detection-82yj5vkxtevasdsitmgjsm.streamlit.app/
+👉 https://<your-streamlit-url>
+*Note: The demo is available only while the local Kubernetes cluster is running.*
 
 ## ⚙️ How It Works
-UI (Streamlit) → API Gateway → AWS Lambda → XGBoost Model (S3)
+```text
+Streamlit Community Cloud
+        │
+        ▼
+      ngrok
+        │
+        ▼
+Kubernetes Service
+        │
+        ▼
+FastAPI Inference API
+        │
+        ▼
+XGBoost Model
+```
 
-- The ML model is already trained and deployed on AWS
-- Streamlit UI only sends transaction data to the API
-- Lambda loads the model from S3 and returns real-time predictions
-- No setup or cloud access is required to use the app
+The model is pre-trained and deployed as a **Dockerized FastAPI service** running on **Kubernetes**. Streamlit sends transaction data to the API and displays real-time fraud predictions.
 
---------------------------------------------------------------------------------
+---
 
-💳 Real-Time Credit Card Fraud Detection (End-to-End ML System)
-Overview
+# Overview
 
-This project implements a production-style, end-to-end fraud detection system using classical machine learning (XGBoost) and AWS cloud services, fully deployed with CPU-only, low-cost infrastructure.
+Production-style credit card fraud detection system built to handle **extreme class imbalance (~0.17% fraud cases)**. The project demonstrates an end-to-end ML workflow from data preprocessing and model training to **containerized model serving with Kubernetes**.
 
-The pipeline covers data preprocessing → model training → cloud storage → real-time inference API → UI, closely mirroring real-world ML engineering workflows.
+---
 
-🧩 Problem Statement
+# Problem Statement
 
-Credit card fraud detection is a highly imbalanced binary classification problem, where fraudulent transactions are rare but extremely costly if missed.
+Credit card fraud detection is a highly imbalanced binary classification problem where fraudulent transactions are rare but costly.
 
-Dataset (Kaggle – Credit Card Fraud Detection):
+**Dataset (Kaggle – Credit Card Fraud Detection)**
 
-Total rows: 284,807
-Features: Time, V1–V28 (PCA-transformed), Amount
-Target: Class (1 = Fraud, 0 = Legit)
+- **Rows:** 284,807
+- **Features:** Time, V1–V28, Amount
+- **Target:** Class (Fraud / Legit)
 
-Class Distribution
-+-------+--------+
-| Class | Count  |
-+-------+--------+
-|   1   |   473  |
-|   0   | 283253 |
-+-------+--------+
-⚠️ Fraud cases represent ~0.17% of all transactions, requiring careful handling of class imbalance.
+| Class | Count |
+|------:|------:|
+| Fraud | 473 |
+| Legit | 283,253 |
 
-------------------------------------------------------
+Fraud transactions represent approximately **0.17%** of the dataset.
 
-🧹 Data Preprocessing & Feature Engineering
+---
 
-Platform: Databricks Community Edition (Free)
+# Data Preprocessing
 
-Tools: Spark + SQL
+**Platform:** Databricks Community Edition
 
-Steps:
+**Tools:** Spark + SQL
 
-Loaded raw Kaggle CSV into Databricks
-Data validation and cleanup
-Feature selection (Time, V1–V28, Amount)
-No target leakage (Class excluded from features)
-Final dataset exported as CSV
-Uploaded to AWS S3 for downstream training
+- Data validation and cleanup
+- Feature selection
+- Export processed dataset
+- Prepare training data for XGBoost
 
-----------------------------------------------
-🧠 Model Training (AWS EC2 – CPU Only)
+---
 
-Instance: EC2 t3.micro (Free Tier)
-Framework: XGBoost (CPU mode)
+# Model Training
 
-Key Techniques:
+**Platform:** AWS EC2 (CPU, Free Tier)
 
-scale_pos_weight to handle extreme class imbalance
-Stratified 5-fold cross-validation
-Probability threshold tuning (optimized for recall)
-Standard scaling applied consistently for training & inference
+**Model:** XGBoost
 
-Training Metrics
+Techniques:
+- `scale_pos_weight`
+- Stratified 5-fold cross-validation
+- Threshold tuning
+- Standard scaling
 
-| Metric          | Value      |
-| --------------- | ---------- |
+### Performance
+
+| Metric | Value |
+|--------|------:|
 | Mean CV ROC-AUC | **0.9771** |
-| ROC-AUC (final) | **0.9973** |
-| Precision       | **0.8878** |
-| Recall          | **0.9704** |
+| ROC-AUC | **0.9973** |
+| Precision | **0.8878** |
+| Recall | **0.9704** |
 
-----------------------------------------------------
+---
 
-📦 Model Artifacts & Storage (AWS S3)
+# Kubernetes Model Serving
 
-All artifacts are versioned and stored in S3:
+The inference service is deployed as a **Dockerized FastAPI application** on **Kubernetes**.
 
-s3://fraud-project/models/xgb/
-├── model.pkl
-├── scaler.pkl
-└── feature_list.json
+Pipeline:
 
-S3 acts as a central artifact store, decoupling training from inference.
+```text
+Docker Image
+      │
+      ▼
+Kubernetes Deployment
+      │
+      ▼
+Pod
+      │
+      ▼
+Kubernetes Service
+      │
+      ▼
+FastAPI REST API
+```
 
----------------------------------------------
+The Streamlit application consumes the REST API for real-time inference.
 
-⚡ Real-Time Inference (AWS Lambda)
+---
 
-Deployment: Lambda Container Image (CPU)
-Cold-start behavior:
-
-Model + preprocessing artifacts loaded from S3 once
-Cached in /tmp for reuse
-
-Inference Logic:
-
-Accepts JSON transaction input
-Applies feature ordering + scaling
-Returns fraud probability + classification label
-
-Output Example
-
-{
-  "fraud_probability": 0.87,
-  "fraud_label": 1
-}
-
----------------------------------------
-
-🌐 API Layer (AWS API Gateway)
-
-Type: HTTP API
-Endpoint:
-POST /predict
-
-Flow:
-Client → API Gateway → Lambda → XGBoost Model → Prediction
-
-Fully serverless
-Auto-scaling
-Public REST endpoint
-CORS enabled for UI access
-
--------------------------------------------
-
-🖥️ User Interface (Streamlit)
-
-Deployment: Streamlit Community Cloud
+# Streamlit UI
 
 Features:
 
-Transaction input form (Time, V1–V28, Amount)
-Real-time API calls
-Fraud probability display
-Risk label (Fraud / Legit)
-Prediction history chart
-Feature importance visualization
+- Transaction input form
+- Real-time fraud prediction
+- Fraud probability
+- Fraud / Legit label
+- Prediction history
 
-🔗 Recruiter-friendly public demo link
+---
 
-----------------------------------------------
+# Tech Stack
 
-🛠️ Tech Stack
+- Python
+- XGBoost
+- Databricks
+- Spark
+- SQL
+- AWS EC2 (Training)
+- Docker
+- FastAPI
+- Kubernetes
+- Streamlit
 
-ML: XGBoost (CPU)
-Data Processing: Databricks, Spark, SQL
-Training: AWS EC2 (Free Tier)
-Storage: AWS S3
-Inference: AWS Lambda (Container Image)
-API: AWS API Gateway
-UI: Streamlit
-Cost: ~$0 (Free Tier)
+---
 
----------------------------------------------
+# Key Takeaways
 
-🏁 Key Takeaways
-Designed for real-world ML deployment, not just notebooks
-Handles severe class imbalance
-Fully serverless inference
-Clean separation between training and serving
-Resume-ready, production-style architecture
+- End-to-end ML pipeline
+- Production-style model serving
+- Dockerized inference API
+- Kubernetes deployment
+- Interactive Streamlit frontend
+- Designed for Machine Learning Engineer portfolio
 
------------------------------------------------
-
-📌 Future Improvements
-Model versioning & A/B testing
-Monitoring & drift detection
-Batch inference pipeline
-Feature store integration
-
------------------------------------------------
-
-One-paragraph bullet — Fraud Detection Project:
-
-Real-time credit card fraud detection system.
-Built an end-to-end, production-style ML pipeline using XGBoost (CPU) to handle extreme class imbalance (~0.17% fraud). Performed Spark/SQL preprocessing in Databricks, trained and validated models on AWS EC2 (free tier), and stored versioned artifacts in S3. Deployed a serverless, low-latency inference service using AWS Lambda (container image) and API Gateway, and exposed a Streamlit UI for real-time predictions and monitoring. Achieved ROC-AUC 0.997, precision 0.89, recall 0.97 on held-out data. | GitHub | Live Demo |
 
 -----------------------------------------------
 Author: Iskandar Kholmanov
